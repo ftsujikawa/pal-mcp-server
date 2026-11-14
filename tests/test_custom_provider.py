@@ -29,6 +29,32 @@ class TestCustomProvider:
             assert provider.base_url == "http://localhost:8000/v1"
             assert provider.api_key == "env-key"
 
+    def test_external_url_without_key_warns_and_uses_dummy_key(self, caplog):
+        """Unauthenticated external endpoints must trigger the insecure-access warning."""
+        with patch.dict(os.environ, {"CUSTOM_API_KEY": ""}):
+            with caplog.at_level("WARNING"):
+                provider = CustomProvider(api_key="", base_url="https://llm.example.com/v1")
+
+        assert "without API key" in caplog.text
+        assert provider.api_key == "dummy-key-for-unauthenticated-endpoint"
+
+    def test_localhost_url_without_key_does_not_warn(self, caplog):
+        """Local endpoints such as Ollama are expected to run without authentication."""
+        with patch.dict(os.environ, {"CUSTOM_API_KEY": ""}):
+            with caplog.at_level("WARNING"):
+                provider = CustomProvider(api_key="", base_url="http://localhost:11434/v1")
+
+        assert "without API key" not in caplog.text
+        assert provider.api_key == "dummy-key-for-unauthenticated-endpoint"
+
+    def test_external_url_with_key_does_not_warn(self, caplog):
+        """Authenticated external endpoints should not trigger the warning."""
+        with caplog.at_level("WARNING"):
+            provider = CustomProvider(api_key="real-key", base_url="https://llm.example.com/v1")
+
+        assert "without API key" not in caplog.text
+        assert provider.api_key == "real-key"
+
     def test_provider_initialization_missing_url(self):
         """Test CustomProvider raises error when URL is missing."""
         with patch.dict(os.environ, {"CUSTOM_API_URL": ""}, clear=False):
