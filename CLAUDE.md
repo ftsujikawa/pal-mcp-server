@@ -2,6 +2,16 @@
 
 This file contains essential commands and workflows for developing and maintaining the PAL MCP Server when working with Claude. Use these instructions to efficiently run quality checks, manage the server, check logs, and run tests.
 
+## マルチモデル使い分け方針
+
+- **長文読解（10万トークン超）**: `pal` の `chat` を `gemini-2.5-pro` で
+- **競合パフォーマンス最適化**: `codex` MCP に委譲
+- **最新情報の Web リサーチ**: `pal` の `chat` を `grok-4` で
+- **意見が割れそうな設計判断**: `pal` の `consensus` で複数モデル比較
+- **通常の実装・コードレビュー**: Claude 本体（このセッション）
+
+実装は Claude が主担当。他モデルはあくまでセカンドオピニオン用途。
+
 ## Quick Reference Commands
 
 ### Code Quality Checks
