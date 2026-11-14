@@ -66,17 +66,20 @@ class CustomProvider(OpenAICompatibleProvider):
                 "Custom API URL must be provided via base_url parameter or CUSTOM_API_URL environment variable"
             )
 
-        # For Ollama and other providers that don't require authentication,
-        # set a dummy API key to avoid OpenAI client header issues
-        if not api_key:
-            api_key = "dummy-key-for-unauthenticated-endpoint"
-            logging.debug("Using dummy API key for unauthenticated custom endpoint")
-
         logging.info(f"Initializing Custom provider with endpoint: {base_url}")
 
         self._alias_cache: dict[str, str] = {}
 
+        # Pass the real (possibly empty) key so the parent can warn about
+        # unauthenticated access to non-local endpoints.
         super().__init__(api_key, base_url=base_url, **kwargs)
+
+        # For Ollama and other providers that don't require authentication,
+        # set a dummy API key to avoid OpenAI client header issues. This must
+        # happen after the parent init, otherwise the warning above never fires.
+        if not api_key:
+            self.api_key = "dummy-key-for-unauthenticated-endpoint"
+            logging.debug("Using dummy API key for unauthenticated custom endpoint")
 
         # Initialize model registry
         if CustomProvider._registry is None:
